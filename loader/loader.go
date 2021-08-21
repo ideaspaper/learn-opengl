@@ -6,10 +6,7 @@ import (
 )
 
 type ILoader interface {
-	LoadToVao([]float32) model.IModel
-	createVao() uint32
-	storeDataInAttrList(uint32, []float32)
-	unbindVao()
+	LoadToVao([]float32, []uint32) model.IModel
 	CleanUp()
 }
 
@@ -22,11 +19,21 @@ func NewLoader() ILoader {
 	return &loader{}
 }
 
-func (l *loader) LoadToVao(data []float32) model.IModel {
+func (l *loader) LoadToVao(positions []float32, indicides []uint32) model.IModel {
 	vao := l.createVao()
-	l.storeDataInAttrList(0, data)
+	l.bindIndicesBuffer(indicides)
+	l.storeDataInAttrList(0, positions)
 	l.unbindVao()
-	return model.NewModel(vao, int32(len(data)/3))
+	return model.NewModel(vao, int32(len(indicides)))
+}
+
+func (l *loader) CleanUp() {
+	for _, v := range l.Vaos {
+		gl.DeleteVertexArrays(1, &v)
+	}
+	for _, v := range l.Vbos {
+		gl.DeleteBuffers(1, &v)
+	}
 }
 
 func (l *loader) createVao() uint32 {
@@ -67,16 +74,15 @@ func (l *loader) storeDataInAttrList(attrListNumber uint32, data []float32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
+func (l *loader) bindIndicesBuffer(indicides []uint32) {
+	var vbo uint32
+	gl.GenBuffers(1, &vbo)
+	l.Vbos = append(l.Vbos, vbo)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, 4*len(indicides), gl.Ptr(indicides), gl.STATIC_DRAW)
+}
+
 func (l *loader) unbindVao() {
 	// unbind VAO
 	gl.BindVertexArray(0)
-}
-
-func (l *loader) CleanUp() {
-	for _, v := range l.Vaos {
-		gl.DeleteVertexArrays(1, &v)
-	}
-	for _, v := range l.Vbos {
-		gl.DeleteBuffers(1, &v)
-	}
 }

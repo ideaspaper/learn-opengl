@@ -16,10 +16,10 @@ var square = []float32{
 	-0.5, 0.5, 0,
 	-0.5, -0.5, 0,
 	0.5, -0.5, 0,
-	0.5, -0.5, 0,
 	0.5, 0.5, 0,
-	-0.5, 0.5, 0,
 }
+
+var indicides = []uint32{0, 1, 3, 3, 1, 2}
 
 func main() {
 	runtime.LockOSThread()
@@ -41,7 +41,7 @@ func main() {
 	shaderProgram := shaderprogram.NewShaderProgram(vertexShaderFile, fragmentShaderFile)
 	defer shaderProgram.CleanUp()
 
-	model := loader.LoadToVao(square)
+	model := loader.LoadToVao(square, indicides)
 
 	for !window.ShouldClose() {
 		renderer.Prepare()

@@ -29,7 +29,7 @@ func (r *renderer) Prepare() {
 func (r *renderer) Render(model model.IModel) {
 	gl.BindVertexArray(model.Vao())
 	gl.EnableVertexAttribArray(0) // enable the attribute list where the data stored
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(model.VertexCount()))
+	gl.DrawElementsWithOffset(gl.TRIANGLES, model.VertexCount(), gl.UNSIGNED_INT, 0)
 	gl.DisableVertexAttribArray(0)
 	gl.BindVertexArray(0)
 }
