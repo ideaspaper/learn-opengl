@@ -41,7 +41,7 @@ func main() {
 	shaderProgram := shaderprogram.NewShaderProgram(vertexShaderFile, fragmentShaderFile)
 	defer shaderProgram.CleanUp()
 
-	model := loader.LoadToVao(square, indicides)
+	model := loader.LoadToVao(0, square, indicides)
 
 	for !window.ShouldClose() {
 		renderer.Prepare()

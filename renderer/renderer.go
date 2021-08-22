@@ -10,14 +10,13 @@ type IRenderer interface {
 	Render(model.IModel)
 }
 
-type renderer struct {
-}
+type renderer struct{}
 
 func NewRenderer() IRenderer {
-	if err := gl.Init(); err != nil {
+	err := gl.Init()
+	if err != nil {
 		panic(err)
 	}
-
 	return &renderer{}
 }
 
@@ -28,8 +27,8 @@ func (r *renderer) Prepare() {
 
 func (r *renderer) Render(model model.IModel) {
 	gl.BindVertexArray(model.Vao())
-	gl.EnableVertexAttribArray(0) // enable the attribute list where the data stored
+	gl.EnableVertexAttribArray(model.AttribListId()) // enable the attribute list where the data stored
 	gl.DrawElementsWithOffset(gl.TRIANGLES, model.VertexCount(), gl.UNSIGNED_INT, 0)
-	gl.DisableVertexAttribArray(0)
+	gl.DisableVertexAttribArray(model.AttribListId())
 	gl.BindVertexArray(0)
 }
