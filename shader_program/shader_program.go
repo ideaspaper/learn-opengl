@@ -20,7 +20,7 @@ type shaderProgram struct {
 	fragmentShader uint32
 }
 
-func NewShaderProgram(vertexShaderFile, fragmentShaderFile string) IShaderProgram {
+func NewShaderProgram(vertexShaderFile, fragmentShaderFile string, attribVariables map[uint32]string) IShaderProgram {
 	vertexShader, err := loadShader(vertexShaderFile, gl.VERTEX_SHADER)
 	if err != nil {
 		panic(err)
@@ -35,6 +35,11 @@ func NewShaderProgram(vertexShaderFile, fragmentShaderFile string) IShaderProgra
 
 	gl.AttachShader(program, vertexShader)
 	gl.AttachShader(program, fragmentShader)
+
+	for k, v := range attribVariables {
+		gl.BindAttribLocation(program, k, gl.Str(v))
+	}
+
 	gl.LinkProgram(program)
 	gl.ValidateProgram(program)
 

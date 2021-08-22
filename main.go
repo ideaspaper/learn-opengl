@@ -38,10 +38,16 @@ func main() {
 	shaderPath := filepath.Join(filepath.Dir(ex), "shaders")
 	vertexShaderFile := filepath.Join(shaderPath, "vertex_shader.vert")
 	fragmentShaderFile := filepath.Join(shaderPath, "fragment_shader.frag")
-	shaderProgram := shaderprogram.NewShaderProgram(vertexShaderFile, fragmentShaderFile)
+	shaderProgram := shaderprogram.NewShaderProgram(
+		vertexShaderFile,
+		fragmentShaderFile,
+		map[uint32]string{
+			1: "position\x00",
+		},
+	)
 	defer shaderProgram.CleanUp()
 
-	model := loader.LoadToVao(0, square, indicides)
+	model := loader.LoadToVao(1, square, indicides)
 
 	for !window.ShouldClose() {
 		renderer.Prepare()
