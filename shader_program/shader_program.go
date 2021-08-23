@@ -6,21 +6,32 @@ import (
 	"strings"
 
 	"github.com/go-gl/gl/v4.6-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type IShaderProgram interface {
 	Start()
 	Stop()
 	CleanUp()
+	AttribVariable(string) uint32
+	LoadFloat(string, float32)
+	LoadMatrix(string, mgl32.Mat4)
 }
 
 type shaderProgram struct {
-	program        uint32
-	vertexShader   uint32
-	fragmentShader uint32
+	program          uint32
+	vertexShader     uint32
+	fragmentShader   uint32
+	attribVariables  map[string]uint32
+	uniformVariables map[string]int32
 }
 
-func NewShaderProgram(vertexShaderFile, fragmentShaderFile string, attribVariables map[uint32]string) IShaderProgram {
+func NewShaderProgram(
+	vertexShaderFile,
+	fragmentShaderFile string,
+	attribVariables map[string]uint32,
+	uniformVariables []string,
+) IShaderProgram {
 	vertexShader, err := loadShader(vertexShaderFile, gl.VERTEX_SHADER)
 	if err != nil {
 		panic(err)
@@ -37,16 +48,23 @@ func NewShaderProgram(vertexShaderFile, fragmentShaderFile string, attribVariabl
 	gl.AttachShader(program, fragmentShader)
 
 	for k, v := range attribVariables {
-		gl.BindAttribLocation(program, k, gl.Str(v))
+		gl.BindAttribLocation(program, v, gl.Str(k+"\x00"))
 	}
 
 	gl.LinkProgram(program)
 	gl.ValidateProgram(program)
 
+	uniformVariablesMap := map[string]int32{}
+	for _, v := range uniformVariables {
+		uniformVariablesMap[v] = gl.GetUniformLocation(program, gl.Str(v+"\x00"))
+	}
+
 	return &shaderProgram{
-		program:        program,
-		vertexShader:   vertexShader,
-		fragmentShader: fragmentShader,
+		program:          program,
+		vertexShader:     vertexShader,
+		fragmentShader:   fragmentShader,
+		attribVariables:  attribVariables,
+		uniformVariables: uniformVariablesMap,
 	}
 }
 
@@ -65,6 +83,18 @@ func (sp *shaderProgram) CleanUp() {
 	gl.DeleteShader(sp.vertexShader)
 	gl.DeleteShader(sp.fragmentShader)
 	gl.DeleteProgram(sp.program)
+}
+
+func (sp *shaderProgram) AttribVariable(variableName string) uint32 {
+	return sp.attribVariables[variableName]
+}
+
+func (sp *shaderProgram) LoadFloat(uniformVarName string, value float32) {
+	gl.Uniform1f(sp.uniformVariables[uniformVarName], value)
+}
+
+func (sp *shaderProgram) LoadMatrix(uniformVarName string, value mgl32.Mat4) {
+	gl.UniformMatrix4fv(sp.uniformVariables[uniformVarName], 1, false, &value[0])
 }
 
 func loadShader(shaderFile string, shaderType uint32) (uint32, error) {

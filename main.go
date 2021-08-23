@@ -7,12 +7,14 @@ import (
 	"runtime"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/ideaspaper/learn-opengl/loader"
+	"github.com/ideaspaper/learn-opengl/entities"
+	"github.com/ideaspaper/learn-opengl/loaders"
 	"github.com/ideaspaper/learn-opengl/renderer"
 	shaderprogram "github.com/ideaspaper/learn-opengl/shader_program"
 )
 
-var square = []float32{
+// square
+var vertices = []float32{
 	-0.5, 0.5, 0,
 	-0.5, -0.5, 0,
 	0.5, -0.5, 0,
@@ -25,7 +27,7 @@ func main() {
 	runtime.LockOSThread()
 	window := initGlfw()
 
-	loader := loader.NewLoader()
+	loader := loaders.NewLoader()
 	defer loader.CleanUp()
 
 	renderer := renderer.NewRenderer()
@@ -41,18 +43,48 @@ func main() {
 	shaderProgram := shaderprogram.NewShaderProgram(
 		vertexShaderFile,
 		fragmentShaderFile,
-		map[uint32]string{
-			1: "position\x00",
+		map[string]uint32{
+			"position": 0,
+		},
+		[]string{
+			"transformationMatrix",
+			"projectionMatrix",
 		},
 	)
 	defer shaderProgram.CleanUp()
 
-	model := loader.LoadToVao(1, square, indicides)
+	model := loader.LoadToVao(shaderProgram.AttribVariable("position"), vertices, indicides)
+	entity := entities.NewEntity(model, []float32{0.0, 0.0, -5.0}, []float32{0.0, 0.0, 0.0}, []float32{1.0, 1.0, 1.0})
+
+	togglePositions := false
+	toggleScales := false
 
 	for !window.ShouldClose() {
 		renderer.Prepare()
 		shaderProgram.Start()
-		renderer.Render(model)
+
+		if entity.Coordinate()[0] > 1 || entity.Coordinate()[0] < -1 {
+			togglePositions = !togglePositions
+		}
+
+		if !togglePositions {
+			entity.Coordinate()[0] += 0.0001
+		} else {
+			entity.Coordinate()[0] -= 0.0001
+		}
+
+		if entity.Scale()[0] > 1.2 || entity.Coordinate()[0] < 0.8 {
+			toggleScales = !toggleScales
+		}
+
+		if !toggleScales {
+			entity.Scale()[0] += 0.001
+		} else {
+			entity.Scale()[0] -= 0.001
+		}
+
+
+		renderer.Render(entity, shaderProgram)
 		shaderProgram.Stop()
 		glfw.PollEvents()
 		window.SwapBuffers()
