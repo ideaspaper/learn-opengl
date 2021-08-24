@@ -22,38 +22,43 @@ type shaderProgram struct {
 	program          uint32
 	vertexShader     uint32
 	fragmentShader   uint32
-	attribVariables  map[string]uint32
+	attrVariables    map[string]uint32
 	uniformVariables map[string]int32
 }
 
 func NewShaderProgram(
 	vertexShaderFile,
 	fragmentShaderFile string,
-	attribVariables map[string]uint32,
+	attrVariables map[string]uint32,
 	uniformVariables []string,
 ) IShaderProgram {
+	// get the vertex shader
 	vertexShader, err := loadShader(vertexShaderFile, gl.VERTEX_SHADER)
 	if err != nil {
 		panic(err)
 	}
 
+	// get the fragment shader
 	fragmentShader, err := loadShader(fragmentShaderFile, gl.FRAGMENT_SHADER)
 	if err != nil {
 		panic(err)
 	}
 
+	// create the program
 	program := gl.CreateProgram()
-
 	gl.AttachShader(program, vertexShader)
 	gl.AttachShader(program, fragmentShader)
 
-	for k, v := range attribVariables {
+	// bind all attribute variables
+	for k, v := range attrVariables {
 		gl.BindAttribLocation(program, v, gl.Str(k+"\x00"))
 	}
 
+	// link the program
 	gl.LinkProgram(program)
 	gl.ValidateProgram(program)
 
+	// bind all uniform variables
 	uniformVariablesMap := map[string]int32{}
 	for _, v := range uniformVariables {
 		uniformVariablesMap[v] = gl.GetUniformLocation(program, gl.Str(v+"\x00"))
@@ -63,7 +68,7 @@ func NewShaderProgram(
 		program:          program,
 		vertexShader:     vertexShader,
 		fragmentShader:   fragmentShader,
-		attribVariables:  attribVariables,
+		attrVariables:    attrVariables,
 		uniformVariables: uniformVariablesMap,
 	}
 }
@@ -86,7 +91,7 @@ func (sp *shaderProgram) CleanUp() {
 }
 
 func (sp *shaderProgram) AttribVariable(variableName string) uint32 {
-	return sp.attribVariables[variableName]
+	return sp.attrVariables[variableName]
 }
 
 func (sp *shaderProgram) LoadFloat(uniformVarName string, value float32) {
